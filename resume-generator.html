@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 2rem;
+      background: #f4f4f4;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    input, textarea {
+      width: 100%;
+      padding: 0.8rem;
+      margin: 0.5rem 0 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-right: 1rem;
+      margin-top: 0.5rem;
+    }
+    #resume {
+      margin-top: 2rem;
+      padding: 2rem;
+      background: #fff;
+      border-radius: 12px;
+      max-width: 800px;
+      margin-inline: auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .resume-section {
+      margin-bottom: 1.5rem;
+    }
+    .resume-section h2 {
+      margin-bottom: 0.5rem;
+      border-bottom: 2px solid #4f46e5;
+      display: inline-block;
+    }
+    .profile-pic-preview {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Resume Generator</h1>
+  <form id="resumeForm">
+    <input type="text" id="fullName" placeholder="Full Name" required />
+    <input type="email" id="email" placeholder="Email Address" required />
+    <input type="text" id="phone" placeholder="Phone Number" required />
+    <textarea id="summary" placeholder="Professional Summary" rows="4"></textarea>
+    <div id="experience-section">
+      <textarea placeholder="Work Experience" class="experience" rows="3"></textarea>
+    </div>
+    <button type="button" onclick="addSection('experience')">+ Add Experience</button>
+    <div id="education-section">
+      <textarea placeholder="Education" class="education" rows="3"></textarea>
+    </div>
+    <button type="button" onclick="addSection('education')">+ Add Education</button>
+    <textarea id="skills" placeholder="Skills (comma separated)" rows="2"></textarea>
+    <input type="file" id="profilePic" accept="image/*" />
+    <button type="submit">Generate Resume</button>
+    <button type="button" onclick="downloadPDF()">Download PDF</button>
+  </form>
+
+  <div id="resume" style="display: none;"></div>
+
+  <script>
+    const form = document.getElementById('resumeForm');
+    const resumeContainer = document.getElementById('resume');
+    let profileImage = '';
+
+    document.getElementById('profilePic').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        profileImage = `<img src="${event.target.result}" class="profile-pic-preview" alt="Profile Picture" />`;
+      }
+      if (file) reader.readAsDataURL(file);
+    });
+
+    function addSection(type) {
+      const textarea = document.createElement('textarea');
+      textarea.placeholder = type.charAt(0).toUpperCase() + type.slice(1);
+      textarea.className = type;
+      textarea.rows = 3;
+      document.getElementById(`${type}-section`).appendChild(textarea);
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const name = document.getElementById('fullName').value;
+      const email = document.getElementById('email').value;
+      const phone = document.getElementById('phone').value;
+      const summary = document.getElementById('summary').value;
+      const experienceList = Array.from(document.querySelectorAll('.experience')).map(el => el.value).filter(Boolean);
+      const educationList = Array.from(document.querySelectorAll('.education')).map(el => el.value).filter(Boolean);
+      const skills = document.getElementById('skills').value.split(',').map(s => s.trim());
+
+      resumeContainer.innerHTML = `
+        ${profileImage}
+        <div class="resume-section">
+          <h2>${name}</h2>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Phone:</strong> ${phone}</p>
+        </div>
+        <div class="resume-section">
+          <h2>Professional Summary</h2>
+          <p>${summary}</p>
+        </div>
+        <div class="resume-section">
+          <h2>Work Experience</h2>
+          ${experienceList.map(e => `<p>${e.replace(/\n/g, '<br>')}</p>`).join('')}
+        </div>
+        <div class="resume-section">
+          <h2>Education</h2>
+          ${educationList.map(ed => `<p>${ed.replace(/\n/g, '<br>')}</p>`).join('')}
+        </div>
+        <div class="resume-section">
+          <h2>Skills</h2>
+          <ul>
+            ${skills.map(skill => `<li>${skill}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+
+      resumeContainer.style.display = 'block';
+    });
+
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'pt', 'a4');
+      doc.html(document.getElementById('resume'), {
+        callback: function (pdf) {
+          pdf.save("resume.pdf");
+        },
+        x: 20,
+        y: 20,
+        html2canvas: { scale: 0.6 }
+      });
+    }
+  </script>
+</body>
+</html>
